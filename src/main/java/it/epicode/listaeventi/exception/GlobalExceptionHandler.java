@@ -1,6 +1,6 @@
 package it.epicode.listaeventi.exception;
 
-import it.epicode.u5w3d2pratica.model.ApiError;
+import it.epicode.listaeventi.model.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
