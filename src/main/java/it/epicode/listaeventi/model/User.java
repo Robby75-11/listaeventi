@@ -1,5 +1,6 @@
 package it.epicode.listaeventi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -48,10 +49,12 @@ public class User implements UserDetails {
 
     // Il valore di 'mappedBy' DEVE corrispondere al NOME del campo nell'entità Evento (organizzatore)
     @OneToMany(mappedBy = "organizzatore", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Evento> eventiOrganizzati = new HashSet<>(); // Inizializza la collezione
 
     // Il valore di 'mappedBy' DEVE corrispondere al NOME del campo nell'entità Partecipazione (utente)
     @OneToMany(mappedBy = "utente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Partecipazione> partecipazioni = new HashSet<>(); // Inizializza la collezione
 
     @Override
