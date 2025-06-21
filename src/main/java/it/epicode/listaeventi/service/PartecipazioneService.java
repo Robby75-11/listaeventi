@@ -1,10 +1,8 @@
-// src/main/java/it/epicode/listaeventi/service/PartecipazioneService.java
+
 package it.epicode.listaeventi.service;
 
+import it.epicode.listaeventi.dto.EventoDto;
 import it.epicode.listaeventi.dto.PartecipazioneDto;
-
-import it.epicode.listaeventi.exception.PartecipazioneException;
-import it.epicode.listaeventi.exception.UnAuthorizedException;
 import it.epicode.listaeventi.exception.NotFoundException;
 import it.epicode.listaeventi.exception.UnAuthorizedException;
 import it.epicode.listaeventi.model.Partecipazione;
@@ -13,8 +11,11 @@ import it.epicode.listaeventi.model.User;
 import it.epicode.listaeventi.repository.PartecipazioneRepository;
 import it.epicode.listaeventi.repository.EventoRepository; // Importa EventoRepository
 import it.epicode.listaeventi.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,79 +25,63 @@ import java.util.stream.Collectors;
 @Service
 public class PartecipazioneService {
 
-    private final PartecipazioneRepository partecipazioneRepository;
-    private final EventoRepository eventoRepository; // Inietta EventoRepository
-    private final UserRepository userRepository;
+    @Autowired
+    private PartecipazioneRepository partecipazioneRepository;
 
     @Autowired
-    public PartecipazioneService(PartecipazioneRepository partecipazioneRepository, EventoRepository eventoRepository, UserRepository userRepository) {
-        this.partecipazioneRepository = partecipazioneRepository;
-        this.eventoRepository = eventoRepository;
-        this.userRepository = userRepository;
-    }
+    private EventoRepository eventoRepository;
 
-    @Transactional
-    public PartecipazioneDto createPartecipazione(PartecipazioneDto dto, Long utenteId) throws NotFoundException {
-        User utente = userRepository.findById(utenteId)
-                .orElseThrow(() -> new NotFoundException("Utente non trovato con ID: " + utenteId));
+    @Autowired
+    private UserRepository userRepository;
 
-        Evento evento = eventoRepository.findById(dto.getEventoId()) // !!! CORRETTO: getEventoId()
-                .orElseThrow(() -> new NotFoundException("Evento non trovato con ID: " + dto.getEventoId()));
 
-        if (evento.getPostiDisponibili() <= 0) { // !!! CORRETTO: getPostiDisponibili()
-            throw new PartecipazioneException("Non ci sono più posti disponibili per questo evento.");
-        }
 
-        if (partecipazioneRepository.existsByUtenteIdAndEventoId(utenteId, dto.getEventoId())) { // !!! CORRETTO: existsByUtenteIdAndEventoId
-            throw new PartecipazioneException("Hai già una partecipazione per questo evento.");
-        }
+    public Partecipazione savePartecipazione(PartecipazioneDto partecipazioneDto) throws NotFoundException {
 
-        // Decrementa i posti disponibili
-        evento.setPostiDisponibili(evento.getPostiDisponibili() - 1); // !!! CORRETTO
-        eventoRepository.save(evento); // Salva l'evento aggiornato
+      Evento evento = eventoRepository.findById(partecipazioneDto.getEventoId())
+              .orElseThrow(() -> new NotFoundException("Evento non trovato con ID: " + partecipazioneDto.getEventoId()));
+
+        User user = userRepository.findById(partecipazioneDto.getUserId())
+                .orElseThrow(() -> new NotFoundException("Utente non trovato con ID: " + partecipazioneDto.getUserId()));
 
         Partecipazione partecipazione = new Partecipazione();
-        partecipazione.setUtente(utente); // !!! CORRETTO: setUtente()
-        partecipazione.setEvento(evento); // !!! CORRETTO: setEvento()
-        partecipazione.setDataPartecipazione(LocalDateTime.now()); // !!! IMPORTANTE: Imposta la data di partecipazione
+        partecipazione.setEvento(evento);
+        partecipazione.setUtente(user);
+        partecipazione.setDataPartecipazione(LocalDateTime.now());
 
-        Partecipazione savedPartecipazione = partecipazioneRepository.save(partecipazione);
-        return convertToDto(savedPartecipazione);
+
+        return partecipazioneRepository.save(partecipazione);
     }
 
-    public List<PartecipazioneDto> getPartecipazioniUtente(Long utenteId) { // !!! CORRETTO: getPartecipazioniUtente
-        return partecipazioneRepository.findByUtenteId(utenteId).stream() // !!! CORRETTO: findByUtenteId
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+    public Page<Partecipazione> getAllPartecipazioni(int page, int size, String sortBy) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return partecipazioneRepository.findAll(pageable);
     }
 
-    @Transactional
-    public void cancelPartecipazione(Long idPartecipazione, Long currentUserId) throws NotFoundException { // !!! CORRETTO: idPartecipazione
-        Partecipazione partecipazione = partecipazioneRepository.findById(idPartecipazione) // !!! CORRETTO: idPartecipazione
-                .orElseThrow(() -> new NotFoundException("Partecipazione non trovata con ID: " + idPartecipazione));
+    public Partecipazione getPartecipazione(Long id) throws NotFoundException {
+        return partecipazioneRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Partecipazione con id " + id + " non trovata"));
+    }
 
-        // Controlla che l'utente che cerca di cancellare sia il proprietario della partecipazione
-        if (!partecipazione.getUtente().getId().equals(currentUserId)) { // !!! CORRETTO: getUtente().getId()
-            throw new UnAuthorizedException("Non autorizzato ad annullare questa partecipazione.");
+    public Partecipazione updatePartecipazione(Long id, PartecipazioneDto partecipazioneDto) throws NotFoundException {
+        Partecipazione partecipazione = partecipazioneRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Partecipazione con ID " + id + " non trovata"));
+
+        // Ottieni il nuovo evento solo se l'ID è fornito nel DTO e diverso dall'attuale
+        if (partecipazioneDto.getEventoId() != null && !partecipazioneDto.getEventoId().equals(partecipazione.getEvento().getId())) {
+            Evento nuovoEvento = eventoRepository.findById(partecipazioneDto.getEventoId())
+                    .orElseThrow(() -> new NotFoundException("Evento con ID " + partecipazioneDto.getEventoId() + " non trovato"));
+            partecipazione.setEvento(nuovoEvento);
         }
 
-        // Incrementa i posti disponibili dell'evento
-        Evento evento = partecipazione.getEvento(); // !!! CORRETTO: getEvento()
-        evento.setPostiDisponibili(evento.getPostiDisponibili() + 1); // !!! CORRETTO
-        eventoRepository.save(evento);
+
+        return partecipazioneRepository.save(partecipazione);
+    }
+    public void deletePartecipazione(Long id) throws NotFoundException {
+        Partecipazione partecipazione = partecipazioneRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Partecipazione con ID " + id + " non trovata"));
 
         partecipazioneRepository.delete(partecipazione);
     }
 
-    // Metodo helper per convertire entità in DTO
-    private PartecipazioneDto convertToDto(Partecipazione partecipazione) {
-        PartecipazioneDto dto = new PartecipazioneDto();
-        dto.setId(partecipazione.getId());
-        dto.setUtenteId(partecipazione.getUtente().getId()); // !!! CORRETTO: getUtente().getId()
-        dto.setUsernameUtente(partecipazione.getUtente().getUsername()); // !!! CORRETTO: getUtente().getUsername()
-        dto.setEventoId(partecipazione.getEvento().getId()); // !!! CORRETTO: getEvento().getId()
-        dto.setTitoloEvento(partecipazione.getEvento().getTitolo()); // !!! CORRETTO: getEvento().getTitolo()
-        dto.setDataPartecipazione(partecipazione.getDataPartecipazione()); // !!! CORRETTO: getDataPartecipazione()
-        return dto;
-    }
 }

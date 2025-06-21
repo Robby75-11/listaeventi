@@ -8,16 +8,12 @@ import java.util.Optional;
 
 public interface PartecipazioneRepository extends JpaRepository<Partecipazione, Long> {
 
-    // Trova tutte le partecipazioni per un utente specifico (tramite l'ID dell'utente)
-    // Nota: findByUtenteId si basa sull'attributo 'utente' nel modello Partecipazione e poi il suo 'id'
-    List<Partecipazione> findByUtenteId(Long utenteId); // Aggiornato: utenteId
+    List<Partecipazione> findByUtenteId(Long Id);
 
-    // Trova una partecipazione specifica di un utente per un evento specifico
-    Optional<Partecipazione> findByUtenteIdAndEventoId(Long utenteId, Long eventoId); // Aggiornato: utenteId, eventoId
+    Optional<Partecipazione> findByUtenteIdAndEventoId(Long userId, Long eventoId);
 
-    // Controlla se una partecipazione esiste già per un utente e un evento specifici
-    boolean existsByUtenteIdAndEventoId(Long utenteId, Long eventoId); // Aggiornato: utenteId, eventoId
+    boolean existsByUtenteIdAndEventoId(Long userId, Long eventoId);
 
-    // Potresti aggiungere metodi per trovare partecipazioni per evento, o per dataPartecipazione
-    List<Partecipazione> findByEventoId(Long eventoId); // Utile per ve
+    List<Partecipazione> findByEventoId(Long eventoId);
+
 }

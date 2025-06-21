@@ -4,8 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class EventoDto {
@@ -16,9 +15,10 @@ public class EventoDto {
     private String descrizione;
     @NotEmpty(message = "il luogo non può essere vuoto")
     private String luogo;
-    @NotNull(message = "la data non può esse nulla")
-    private LocalDate dataEvento;
+    @NotNull(message = "la data non può essere nulla")
+    private LocalDateTime dataEvento;
     @NotNull(message = "Il numero di posti totali non può essere nullo")
     @Min(value = 1, message = "I posti totali devono essere almeno 1")
     private Integer postiTotali;
+
 }

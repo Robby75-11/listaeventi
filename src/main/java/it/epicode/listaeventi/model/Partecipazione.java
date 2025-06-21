@@ -1,10 +1,8 @@
 package it.epicode.listaeventi.model;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jdk.jfr.Event;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,15 +16,18 @@ public class Partecipazione {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "utente_id", nullable = false)
+    @JsonIgnore
+    private User utente;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
+    @JoinColumn(name = "evento_id", nullable = false)
+    @JsonIgnore
     private Evento evento;
-    private LocalDateTime dataPartecipazione;
-    private LocalDateTime dataCreazione; // MODIFICATO
-    private LocalDateTime dataAggiornamento; // MODIFICATO
+
+
+    @Column(nullable = false)
+    private LocalDateTime dataPartecipazione; // Data e ora della partecipazione
 
 
 }

@@ -7,13 +7,16 @@ import it.epicode.listaeventi.repository.UserRepository;
 import it.epicode.listaeventi.security.JwtTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
 
 public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    PasswordEncoder passwordEncoder;
 
     @Autowired
     private JwtTool jwtTool;
@@ -24,13 +27,13 @@ public class AuthService {
             */
 
     public String login(LoginDto loginDto) throws NotFoundException {
-        User user = userRepository.findByEmail(loginDto.getEmail()).
+        User utente = userRepository.findByEmail(loginDto.getEmail()).
                 orElseThrow(() ->new NotFoundException("Email/password  non trovati"));
 
 
-        if(passwordEncoder.matches(loginDto.getPassword(),user.getPassword())) {
+        if(passwordEncoder.matches(loginDto.getPassword(),utente.getPassword())) {
             //utente è autenticato, devo creare il token
-            return jwtTool.createToken(user);
+            return jwtTool.createToken(utente);
         }
         else{
             throw new NotFoundException("Utente con questo Email/password non trovato");
