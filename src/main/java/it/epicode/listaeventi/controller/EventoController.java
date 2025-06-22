@@ -23,6 +23,7 @@ public class EventoController {
 
     // Creazione evento - solo organizzatore evento
 
+    @PreAuthorize("hasAuthority('ORGANIZZATORE_EVENTO')")
     @PostMapping
     public ResponseEntity<Evento> createEvento(@RequestBody EventoDto eventoDto) {
         try {

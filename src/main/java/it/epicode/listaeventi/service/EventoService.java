@@ -31,7 +31,7 @@ public class EventoService {
         evento.setDescrizione(eventoDto.getDescrizione());
         evento.setDataEvento(eventoDto.getDataEvento());
         evento.setLuogo(eventoDto.getLuogo());
-        evento.setPostiDisponibili(eventoDto.getPostiTotali()); // !!! IMPORTANTE: Inizializza i posti disponibili
+        evento.setPostiDisponibili(eventoDto.getPostiDisponibili()); // !!! IMPORTANTE: Inizializza i posti disponibili
 
         // --- INIZIO: LOGICA PER IMPOSTARE L'ORGANIZZATORE ---
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -63,21 +63,40 @@ public class EventoService {
     }
 
 
-    public Evento updateEvento(Long id, EventoDto eventoDto) throws NotFoundException {
+    public Evento updateEvento(Long id, EventoDto eventoDto) throws NotFoundException, UnAuthorizedException {
         Evento eventoDaAggiornare = getEvento(id);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        // Controllo se l’organizzatore è l’utente autenticato
+        if (!eventoDaAggiornare.getOrganizzatore().getUsername().equals(username)) {
+            throw new UnAuthorizedException("Non sei autorizzato ad aggiornare questo evento");
+        }
 
         eventoDaAggiornare.setTitolo(eventoDto.getTitolo());
         eventoDaAggiornare.setLuogo(eventoDto.getLuogo());
         eventoDaAggiornare.setDescrizione(eventoDto.getDescrizione());
-        eventoDaAggiornare.setPostiDisponibili(eventoDto.getPostiTotali());
+        eventoDaAggiornare.setPostiDisponibili(eventoDto.getPostiDisponibili());
         eventoDaAggiornare.setDataEvento(eventoDto.getDataEvento());
 
      return eventoRepository.save(eventoDaAggiornare);
     }
 
-    public void
-    deleteEvento(Long id) throws NotFoundException {
+    public void deleteEvento(Long id) throws NotFoundException {
         Evento eventoDaCancellare = getEvento(id);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User userLoggato = userRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Utente non trovato: " + username));
+
+
+        // Controllo se l’organizzatore è l’utente autenticato
+        if (!eventoDaCancellare.getOrganizzatore().getId().equals(userLoggato.getId())) {
+            throw new UnAuthorizedException("Non sei autorizzato a cancellare questo evento");
+        }
 
        eventoRepository.delete(eventoDaCancellare);
 

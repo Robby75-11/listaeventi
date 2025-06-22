@@ -63,6 +63,19 @@ public class PartecipazioneService {
                 .orElseThrow(() -> new NotFoundException("Partecipazione con id " + id + " non trovata"));
     }
 
+    public List<Partecipazione> getPartecipazioniByUser(Long userId) {
+        return partecipazioneRepository.findByUtenteId(userId);
+    }
+
+    public Partecipazione getPartecipazioneByUtenteAndEvento(Long userId, Long eventoId) throws NotFoundException {
+        return partecipazioneRepository.findByUtenteIdAndEventoId(userId, eventoId)
+                .orElseThrow(() -> new NotFoundException("Partecipazione non trovata"));
+    }
+
+    public boolean partecipazioneEsiste(Long userId, Long eventoId) {
+        return partecipazioneRepository.existsByUtenteIdAndEventoId(userId, eventoId);
+    }
+
     public Partecipazione updatePartecipazione(Long id, PartecipazioneDto partecipazioneDto) throws NotFoundException {
         Partecipazione partecipazione = partecipazioneRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Partecipazione con ID " + id + " non trovata"));
@@ -77,9 +90,13 @@ public class PartecipazioneService {
 
         return partecipazioneRepository.save(partecipazione);
     }
-    public void deletePartecipazione(Long id) throws NotFoundException {
-        Partecipazione partecipazione = partecipazioneRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Partecipazione con ID " + id + " non trovata"));
+    public void deleteMyPartecipazione(Long partecipazioneId, Long userId) throws NotFoundException, UnAuthorizedException {
+        Partecipazione partecipazione = partecipazioneRepository.findById(partecipazioneId)
+                .orElseThrow(() -> new NotFoundException("Partecipazione con ID " + partecipazioneId + " non trovata"));
+
+        if (!partecipazione.getUtente().getId().equals(userId)) {
+            throw new UnAuthorizedException("Non sei autorizzato a cancellare questa partecipazione");
+        }
 
         partecipazioneRepository.delete(partecipazione);
     }

@@ -29,6 +29,8 @@ public class JwtTool {
         //per generare il token avremo bisogno della data di generazione del token, della durata e dell'id
         //dell'utente per il quale stiamo creando il token. Avremo inoltre bisogno anche della chiave segreta
         //per poter crittografare il token
+        Date now = new Date();
+        Date expiryDate = new Date(System.currentTimeMillis() + durata); // durata in ms
 
         return Jwts.builder().issuedAt(new Date()).expiration(new Date(System.currentTimeMillis() + durata)).
                 subject(String.valueOf(user.getId())).

@@ -34,11 +34,13 @@ public class SecurityConfig {
 
         httpSecurity.authorizeHttpRequests(http->http.requestMatchers("/auth/**").permitAll());
 
-        httpSecurity.authorizeHttpRequests(http->http.requestMatchers(HttpMethod.GET).permitAll());
-        httpSecurity.authorizeHttpRequests(http->http.requestMatchers(HttpMethod.POST).permitAll());
-
+        httpSecurity.authorizeHttpRequests(http->http.requestMatchers(HttpMethod.GET,"/eventi/**").permitAll());
+        httpSecurity.authorizeHttpRequests(http->http.requestMatchers(HttpMethod.POST,"/auth/**").permitAll());
+        httpSecurity.authorizeHttpRequests(http->http.requestMatchers("/users/**").authenticated());
+        httpSecurity.authorizeHttpRequests(http->http.requestMatchers("/eventi/**").authenticated());
         httpSecurity.authorizeHttpRequests(http->http.anyRequest().denyAll());
 
+        httpSecurity.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
     }

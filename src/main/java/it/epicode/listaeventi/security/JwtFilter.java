@@ -29,17 +29,17 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authorization = request.getHeader("Authorization");
 
-        if(authorization==null || !authorization.startsWith("Bearer ")) {
-            throw new UnAuthorizedException("Token non presente, non sei autorizzato ad usare il servizio richiesto");
-        }
-        else {
-            //estraggo il token dalla stringa authorization che contiene anche la parola Bearer prima del token. Per questo prendo solo
-            //la parte della stringa che comincia dal carattere 7
+        if(authorization != null && authorization.startsWith("Bearer ")) {
             String token = authorization.substring(7);
 
+
+            //estraggo il token dalla stringa authorization che contiene anche la parola Bearer prima del token. Per questo prendo solo
+            //la parte della stringa che comincia dal carattere 7
+
+            try {
             //verifico che il token sia valido
             jwtTool.validateToken(token);
-            try {
+
 
                 User user = jwtTool.getUserFromToken(token);
 
@@ -50,13 +50,24 @@ public class JwtFilter extends OncePerRequestFilter {
                 //aggiungo l'autenticazione con l'utente nel contesto di Spring security
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }catch (NotFoundException e) {
-                throw new UnAuthorizedException("Utente collegato al token non trovato");
-
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Utente collegato al token non trovato");
+                return;
+            } catch (Exception e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token non valido");
+                return;
             }
+        } else if (!new AntPathMatcher().match("/auth/**", request.getServletPath())) {
+            // Solo se NON è un endpoint /auth/** blocchiamo l’accesso
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token non presente, accesso negato");
+            return;
+        }
 
             filterChain.doFilter(request, response);
         }
-    }
+
 
     //questo metodo evita che gli endpoint di registrazione e login possano richiedere il token
     @Override

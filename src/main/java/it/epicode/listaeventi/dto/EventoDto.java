@@ -17,8 +17,8 @@ public class EventoDto {
     private String luogo;
     @NotNull(message = "la data non può essere nulla")
     private LocalDateTime dataEvento;
-    @NotNull(message = "Il numero di posti totali non può essere nullo")
-    @Min(value = 1, message = "I posti totali devono essere almeno 1")
-    private Integer postiTotali;
+    @NotNull(message = "Il numero di posti disponibili non può essere nullo")
+    @Min(value = 1, message = "I posti disponibili devono essere almeno 1")
+    private Integer postiDisponibili;
 
 }

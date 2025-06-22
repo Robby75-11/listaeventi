@@ -17,6 +17,8 @@ public class Evento {
 @GeneratedValue(strategy = GenerationType.IDENTITY) // Specifica la strategia di generazione
 private Long id;
 
+
+
 @Column(nullable = false)
 private String titolo;
 
